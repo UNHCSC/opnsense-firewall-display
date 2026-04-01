@@ -15,10 +15,6 @@ type (
 		Structured string    `gomysql:"structured_data" json:"structured_data"`
 	}
 
-	DBPointerInt struct {
-		Value int `json:"value"`
-	}
-
 	FirewallLogEntry struct {
 		ID             int               `gomysql:"id,primary,increment" json:"id"`
 		SyslogHeaderID int               `gomysql:"syslog_header_id,fkey:SyslogHeader.id" json:"syslog_header_id"`
@@ -36,8 +32,8 @@ type (
 		Length         int               `gomysql:"length" json:"length"`
 		SrcIP          string            `gomysql:"src_ip" json:"src_ip"`
 		DstIP          string            `gomysql:"dst_ip" json:"dst_ip"`
-		SrcPort        *DBPointerInt     `gomysql:"src_port" json:"src_port,omitempty"`
-		DstPort        *DBPointerInt     `gomysql:"dst_port" json:"dst_port,omitempty"`
+		SrcPort        *int              `gomysql:"src_port" json:"src_port,omitempty"`
+		DstPort        *int              `gomysql:"dst_port" json:"dst_port,omitempty"`
 		TCPFlags       string            `gomysql:"tcp_flags" json:"tcp_flags,omitempty"`
 		Extra          map[string]string `gomysql:"extra" json:"extra,omitempty"`
 		RawFilterLog   string            `gomysql:"raw_filter_log" json:"raw_filter_log"`
