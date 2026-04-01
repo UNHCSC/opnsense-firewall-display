@@ -1,0 +1,5 @@
+{
+    "editor.tabSize": 4,
+    "go.testTimeout": "10m",
+    "go.testFlags": ["-count=1"]
+}

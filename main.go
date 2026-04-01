@@ -1,66 +1,33 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"log"
-	"net"
-	"os"
-	"os/signal"
-	"syscall"
+	"github.com/UNHCSC/opnsense-firewall-display/app"
+	"github.com/UNHCSC/opnsense-firewall-display/config"
+	"github.com/UNHCSC/opnsense-firewall-display/db"
+	"github.com/gofiber/fiber/v2"
+	"github.com/z46-dev/golog"
+)
+
+var (
+	log *golog.Logger = golog.New().Prefix("[MAIN]", golog.BoldBlue)
+	err error
 )
 
 func main() {
-	var (
-		listenAddr *string = flag.String("listen", ":5140", "UDP listen address")
-		bufSize    *int    = flag.Int("bufsize", 64*1024, "receive buffer size in bytes")
-	)
-
-	flag.Parse()
-
-	var (
-		conn net.PacketConn
-		err  error
-	)
-
-	if conn, err = net.ListenPacket("udp", *listenAddr); err != nil {
-		log.Fatalf("failed to listen on %s: %v", *listenAddr, err)
+	if err = config.Init("config.toml"); err != nil {
+		log.Panicf("Failed to initialize config: %v\n", err)
 	}
 
-	defer conn.Close()
+	if err = db.Init(log); err != nil {
+		log.Panicf("Failed to initialize database: %v\n", err)
+	}
 
-	log.Printf("syslog receiver listening on udp %s", *listenAddr)
-
-	var (
-		sigCh chan os.Signal = make(chan os.Signal, 1)
-		buf   []byte         = make([]byte, *bufSize)
-	)
-
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigCh
-		log.Println("shutting down")
-		_ = conn.Close()
-	}()
-
-	for {
-		var (
-			n    int
-			addr net.Addr
-		)
-
-		if n, addr, err = conn.ReadFrom(buf); err != nil {
-			if opErr, ok := err.(*net.OpError); ok && !opErr.Timeout() {
-				log.Printf("listener closed: %v", err)
-				return
-			}
-
-			log.Printf("read error: %v", err)
-			continue
+	var fiberApp *fiber.App
+	if fiberApp, err = app.InitAndListen(log); err != nil {
+		log.Panicf("Failed to initialize app: %v\n", err)
+	} else {
+		if err = app.StartApp(fiberApp); err != nil {
+			log.Panicf("Failed to start app: %v\n", err)
 		}
-
-		var msg string = string(buf[:n])
-		fmt.Printf("[%s] %s\n", addr.String(), msg)
 	}
 }
