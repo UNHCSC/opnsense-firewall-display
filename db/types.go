@@ -2,12 +2,6 @@ package db
 
 import "time"
 
-// Note: Data is imported from FreeIPA and Proxmox. We do not create or destroy any of these
-// referenced entities (Users, Groups, Assets), we only reference them and create mappings
-// between them. We only care about what we import too. If a user imports the group "group1"
-// and "user1" is a member of groups "group1" and "group2", we will only create the membership
-// mapping between "user1" and "group1".
-
 type (
 	SyslogHeader struct {
 		ID         int       `gomysql:"id,primary,increment" json:"id"`
@@ -49,6 +43,3 @@ type (
 		RawFilterLog   string            `gomysql:"raw_filter_log" json:"raw_filter_log"`
 	}
 )
-
-// Note that full site administrators are configured through config.toml
-// LDAP group entries. Usually defaults to "admins" for FreeIPA.
