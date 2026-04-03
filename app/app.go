@@ -43,6 +43,27 @@ func InitAndListen(parentLog *golog.Logger) (app *fiber.App, err error) {
 	})
 
 	// Pages
+	app.Get("/manifest.webmanifest", func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "application/manifest+json; charset=utf-8")
+		c.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+		return c.SendFile("./client/static/manifest.webmanifest", false)
+	})
+	app.Get("/service-worker.js", func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "application/javascript; charset=utf-8")
+		c.Set("Service-Worker-Allowed", "/")
+		c.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+		return c.SendFile("./client/static/service-worker.js", false)
+	})
+	app.Get("/app-icon.svg", func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "image/svg+xml; charset=utf-8")
+		c.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+		return c.SendFile("./client/static/app-icon.svg", false)
+	})
+	app.Get("/app-icon-maskable.svg", func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "image/svg+xml; charset=utf-8")
+		c.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+		return c.SendFile("./client/static/app-icon-maskable.svg", false)
+	})
 	app.Get("/", getIndex)
 
 	// API
@@ -53,8 +74,10 @@ func InitAndListen(parentLog *golog.Logger) (app *fiber.App, err error) {
 
 	// API v1
 	apiV1.Get("/logs", apiGetLogs)
+	apiV1.Get("/logsByAge", apiGetLogsByAge)
 	apiV1.Get("/logStream", apiGetLogStream)
 	apiV1.Get("/geolocate", apiGetGeolocation)
+	apiV1.Post("/geolocateMany", apiPostGeolocationMany)
 
 	return
 }

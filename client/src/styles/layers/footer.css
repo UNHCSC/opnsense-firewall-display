@@ -21,4 +21,39 @@
         position: relative;
         z-index: 1;
     }
+
+    .footer-link,
+    .footer-copy {
+        color: var(--primary-white);
+        font-size: 0.92rem;
+        line-height: 1.35;
+    }
+
+    .footer-link {
+        font-weight: 700;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition:
+            border-color 160ms ease,
+            opacity 160ms ease;
+    }
+
+    .footer-link:hover,
+    .footer-link:focus-visible {
+        opacity: 0.88;
+        border-color: rgba(245, 244, 236, 0.78);
+        outline: none;
+    }
+
+    .footer-copy {
+        margin: 0;
+        font-weight: 500;
+        opacity: 0.88;
+    }
+
+    @media (max-width: 720px) {
+        footer {
+            justify-content: flex-start;
+        }
+    }
 }

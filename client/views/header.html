@@ -1,9 +1,40 @@
 <header>
     <img src="/static/assets/UNH_BRAND-RGB_LS_W_OL.svg" alt="UNH Logo">
-    <!-- <span>OPNsense Firewall Display</span> -->
-    <nav>
-        <a href="#logs">Download Logs</a>
-        <a href="#filters">Filters</a>
-        <a href="#settings">Settings</a>
+    <nav class="header-nav">
+        <button type="button" class="header-filters-trigger" data-history-filters-open
+            aria-controls="history-filters-panel" aria-expanded="false">Filters</button>
     </nav>
+    <section id="history-filters-panel" class="history-filters" hidden aria-labelledby="history-filters-title">
+        <form id="history-filters-form" class="history-filters__dialog">
+            <div class="history-filters__header">
+                <div>
+                    <h2 id="history-filters-title" class="history-filters__title">History filters</h2>
+                </div>
+                <button type="button" class="history-filters__close" data-history-filters-close
+                    aria-label="Close history filters">Close</button>
+            </div>
+
+            <div class="history-filters__fields">
+                <label class="history-filters__field">
+                    <span class="history-filters__label">History age (seconds)</span>
+                    <input type="number" min="1" max="31536000" step="1" name="ageSeconds"
+                        class="history-filters__input">
+                </label>
+
+                <label class="history-filters__field">
+                    <span class="history-filters__label">Interfaces</span>
+                    <select id="history-filters-interfaces" name="interfaces" class="history-filters__select"
+                        multiple size="6"></select>
+                </label>
+            </div>
+
+            <div class="history-filters__footer">
+                <p id="history-filters-status" class="history-filters__status" aria-live="polite"></p>
+                <div class="history-filters__actions">
+                    <button type="reset" class="history-filters__secondary">Reset</button>
+                    <button type="submit" class="history-filters__primary">Apply</button>
+                </div>
+            </div>
+        </form>
+    </section>
 </header>

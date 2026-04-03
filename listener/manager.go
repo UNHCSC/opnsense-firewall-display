@@ -5,10 +5,23 @@ import (
 
 	"github.com/UNHCSC/opnsense-firewall-display/config"
 	"github.com/UNHCSC/opnsense-firewall-display/db"
+	"github.com/UNHCSC/opnsense-firewall-display/geoip"
 	"github.com/z46-dev/gomysql"
 )
 
-type Subscriber chan *db.FirewallLogEntry
+type (
+	FirewallLogStreamEntryGeolocation struct {
+		Source      *geoip.IPInfo `json:"source,omitempty"`
+		Destination *geoip.IPInfo `json:"destination,omitempty"`
+	}
+
+	FirewallLogStreamEntry struct {
+		Entry       *db.FirewallLogEntry               `json:"entry"`
+		Geolocation *FirewallLogStreamEntryGeolocation `json:"geolocation"`
+	}
+
+	Subscriber chan *FirewallLogStreamEntry
+)
 
 var (
 	subscribers      map[Subscriber]struct{} = make(map[Subscriber]struct{})
@@ -51,11 +64,24 @@ func syslogWorker() {
 			continue
 		}
 
+		var streamEntry *FirewallLogStreamEntry = &FirewallLogStreamEntry{
+			Entry:       entry,
+			Geolocation: &FirewallLogStreamEntryGeolocation{},
+		}
+
+		if streamEntry.Geolocation.Source, err = geoip.GetIPInfo(entry.SrcIP); err != nil {
+			logger.Errorf("failed to geolocate source IP %q: %v", entry.SrcIP, err)
+		}
+
+		if streamEntry.Geolocation.Destination, err = geoip.GetIPInfo(entry.DstIP); err != nil {
+			logger.Errorf("failed to geolocate destination IP %q: %v", entry.DstIP, err)
+		}
+
 		subscribersMutex.RLock()
 
 		for sub := range subscribers {
 			select {
-			case sub <- entry:
+			case sub <- streamEntry:
 			default:
 				// It's full, skip to avoid blocking
 			}

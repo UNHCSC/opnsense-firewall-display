@@ -1,13 +1,85 @@
-<section class="world-map-card" aria-labelledby="world-map-title">
-    <div class="world-map-card__header">
-        <div>
-            <p class="world-map-card__eyebrow">Global Activity</p>
-            <h2 id="world-map-title" class="world-map-card__title">World traffic overview</h2>
+<section class="traffic-dashboard" aria-labelledby="world-map-title">
+    <article class="dashboard-card dashboard-card--map" aria-labelledby="world-map-title">
+        <div class="dashboard-card__header">
+            <h2 id="world-map-title" class="dashboard-card__title">World traffic overview</h2>
         </div>
-        <p class="world-map-card__meta">Static world view with animated route overlays</p>
-    </div>
-    <div class="world-map-card__body">
-        <div id="world-map" class="world-map" role="img"
-            aria-label="Fixed 2D world map with subtle country borders and animated arcs between points."></div>
-    </div>
+        <div class="dashboard-card__body dashboard-card__body--map">
+            <div id="world-map" class="world-map" role="img"
+                aria-label="Draggable 2D world map with live animated firewall traffic arcs."></div>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-card--square dashboard-card--pie">
+        <div class="dashboard-card__header">
+            <h3 class="dashboard-card__title">IP Type</h3>
+        </div>
+        <div class="dashboard-card__body dashboard-card__body--chart">
+            <div class="dashboard-card__chart-visual">
+                <canvas id="chart-ip-type" aria-label="Pie chart of IPv4 versus IPv6 traffic"></canvas>
+            </div>
+            <div id="legend-chart-ip-type" class="dashboard-card__legend dashboard-card__legend--stacked"
+                aria-hidden="true"></div>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-card--square dashboard-card--pie">
+        <div class="dashboard-card__header">
+            <h3 class="dashboard-card__title">Protocol</h3>
+        </div>
+        <div class="dashboard-card__body dashboard-card__body--chart">
+            <div class="dashboard-card__chart-visual">
+                <canvas id="chart-protocol" aria-label="Pie chart of top network protocols"></canvas>
+            </div>
+            <div id="legend-chart-protocol" class="dashboard-card__legend dashboard-card__legend--stacked"
+                aria-hidden="true"></div>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-card--square dashboard-card--pie">
+        <div class="dashboard-card__header">
+            <h3 class="dashboard-card__title">Top Countries</h3>
+        </div>
+        <div class="dashboard-card__body dashboard-card__body--chart">
+            <div class="dashboard-card__chart-visual">
+                <canvas id="chart-top-countries" aria-label="Pie chart of top remote countries"></canvas>
+            </div>
+            <div id="legend-chart-top-countries" class="dashboard-card__legend dashboard-card__legend--stacked"
+                aria-hidden="true"></div>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-card--square dashboard-card--pie">
+        <div class="dashboard-card__header">
+            <h3 class="dashboard-card__title">Top Ports</h3>
+        </div>
+        <div class="dashboard-card__body dashboard-card__body--chart">
+            <div class="dashboard-card__chart-visual">
+                <canvas id="chart-top-ports" aria-label="Pie chart of top remote ports"></canvas>
+            </div>
+            <div id="legend-chart-top-ports" class="dashboard-card__legend dashboard-card__legend--stacked"
+                aria-hidden="true"></div>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-card--wide">
+        <div class="dashboard-card__header">
+            <h3 class="dashboard-card__title">Traffic Over Time</h3>
+            <div id="legend-chart-traffic-over-time" class="dashboard-card__legend" aria-hidden="true"></div>
+        </div>
+        <div class="dashboard-card__body dashboard-card__body--timeline">
+            <canvas id="chart-traffic-over-time"
+                aria-label="Line graph of inbound and outbound traffic over time"></canvas>
+        </div>
+    </article>
+
+    <article class="dashboard-card dashboard-card--wide">
+        <div class="dashboard-card__header">
+            <h3 class="dashboard-card__title">Decisions Over Time</h3>
+            <div id="legend-chart-decisions-over-time" class="dashboard-card__legend" aria-hidden="true"></div>
+        </div>
+        <div class="dashboard-card__body dashboard-card__body--timeline">
+            <canvas id="chart-decisions-over-time"
+                aria-label="Line graph of pass and block decisions over time"></canvas>
+        </div>
+    </article>
 </section>

@@ -3,6 +3,7 @@
 @import "./layers/header.css";
 @import "./layers/footer.css";
 @import "./layers/main.css";
+@import "./layers/dashboard.css";
 @import "./layers/world-map.css";
 
 @layer index-page {
@@ -18,8 +19,10 @@
     .index-page {
         display: flex;
         flex-direction: column;
+        height: 100dvh;
         min-height: 100dvh;
         width: 100%;
+        overflow: hidden;
 
         > * {
             min-height: 0;
@@ -32,6 +35,14 @@
 
         > :where(main, .content, .template) {
             flex: 1 1 auto;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .index-page {
+            height: auto;
+            min-height: 100dvh;
+            overflow: visible;
         }
     }
 }

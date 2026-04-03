@@ -18,49 +18,45 @@ const DEFAULT_STYLE = {
             url: "https://demotiles.maplibre.org/tiles/tiles.json"
         }
     },
-    layers: [
-        {
-            id: "background",
-            type: "background",
-            paint: {
-                "background-color": "#edf2f7"
-            }
-        },
-        {
-            id: "countries-fill",
-            type: "fill",
-            source: "maplibre",
-            "source-layer": "countries",
-            paint: {
-                "fill-color": "#dbe4ef",
-                "fill-opacity": 0.96
-            }
-        },
-        {
-            id: "countries-boundary",
-            type: "line",
-            source: "maplibre",
-            "source-layer": "countries",
-            paint: {
-                "line-color": "#9eb1c8",
-                "line-width": [
-                    "interpolate",
-                    ["linear"],
-                    ["zoom"],
-                    1, 0.8,
-                    6, 1.4
-                ],
-                "line-opacity": 0.72
-            }
+    layers: [{
+        id: "background",
+        type: "background",
+        paint: {
+            "background-color": "#edf2f7"
         }
-    ]
+    }, {
+        id: "countries-fill",
+        type: "fill",
+        source: "maplibre",
+        "source-layer": "countries",
+        paint: {
+            "fill-color": "#dbe4ef",
+            "fill-opacity": 0.96
+        }
+    }, {
+        id: "countries-boundary",
+        type: "line",
+        source: "maplibre",
+        "source-layer": "countries",
+        paint: {
+            "line-color": "#9eb1c8",
+            "line-width": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                1, 0.8,
+                6, 1.4
+            ],
+            "line-opacity": 0.72
+        }
+    }]
 };
 
-export const ARC_COLORS = [
-    [0, 79, 157],
-    [76, 155, 213],
-    [20, 86, 52]
-];
+export const ARC_COLORS = {
+    outbound: [0, 79, 157],
+    inboundPass: [20, 126, 66],
+    inboundBlock: [191, 48, 48]
+};
 
 export const DEMO_POINTS = [
     [-74.006, 40.7128],
@@ -83,19 +79,26 @@ const MAX_ARC_DURATION_MS = 2600;
 const DEFAULT_MAX_ACTIVE_ARCS = 160;
 
 function easeInOutCubic(progress) {
-    return progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - (Math.pow(-2 * progress + 2, 3) / 2);
+    return progress < .5 ? 4 * progress * progress * progress : 1 - (Math.pow(-2 * progress + 2, 3) / 2);
 }
 
-function normalizeArcDirection(source, target) {
-    return source[0] <= target[0] ? [source, target] : [target, source];
+function getWrappedLongitudeDelta(sourceLon, targetLon) {
+    let deltaLon = targetLon - sourceLon;
+
+    if (deltaLon > 180) {
+        deltaLon -= 360;
+    } else if (deltaLon < -180) {
+        deltaLon += 360;
+    }
+
+    return deltaLon;
 }
 
 function createArcPath(source, target) {
     const [sourceLon, sourceLat] = source;
-    const [targetLon, targetLat] = target;
-    const deltaLon = targetLon - sourceLon;
+    const [rawTargetLon, targetLat] = target;
+    const deltaLon = getWrappedLongitudeDelta(sourceLon, rawTargetLon);
+    const targetLon = sourceLon + deltaLon;
     const deltaLat = targetLat - sourceLat;
     const distance = Math.hypot(deltaLon, deltaLat);
     const arcHeight = Math.min(18, Math.max(1.5, distance * 0.1));
@@ -110,11 +113,11 @@ function createArcPath(source, target) {
 
         return [
             (oneMinusT * oneMinusT * sourceLon)
-                + (2 * oneMinusT * t * controlPoint[0])
-                + (t * t * targetLon),
+            + (2 * oneMinusT * t * controlPoint[0])
+            + (t * t * targetLon),
             (oneMinusT * oneMinusT * sourceLat)
-                + (2 * oneMinusT * t * controlPoint[1])
-                + (t * t * targetLat)
+            + (2 * oneMinusT * t * controlPoint[1])
+            + (t * t * targetLat)
         ];
     });
 }
@@ -142,7 +145,7 @@ function getRandomPair(points) {
         toIndex = Math.floor(Math.random() * points.length);
     }
 
-    return normalizeArcDirection(points[fromIndex], points[toIndex]);
+    return [points[fromIndex], points[toIndex]];
 }
 
 function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
@@ -163,20 +166,17 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
             }
 
             const progress = easeInOutCubic(Math.min(1, elapsed / arc.durationMs));
-            const fade = elapsed <= arc.durationMs
-                ? 1
-                : Math.max(0, 1 - ((elapsed - arc.durationMs) / ARC_FADE_MS));
-            const pointIndex = Math.min(
-                arc.path.length - 1,
-                Math.max(1, Math.ceil(progress * arc.path.length) - 1)
-            );
+            const fade = elapsed <= arc.durationMs ? 1 : Math.max(0, 1 - ((elapsed - arc.durationMs) / ARC_FADE_MS));
+            const pointIndex = Math.min(arc.path.length - 1, Math.max(1, Math.ceil(progress * arc.path.length) - 1));
 
             liveArcs.push(arc);
+
             pathData.push({
                 id: arc.id,
                 path: arc.path.slice(0, pointIndex + 1),
                 color: [...arc.color, Math.round(255 * fade)]
             });
+
             headData.push({
                 id: arc.id,
                 position: arc.path[pointIndex],
@@ -187,38 +187,38 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
         arcs = liveArcs;
 
         overlay.setProps({
-            layers: pathData.length === 0
-                ? []
-                : [
-                    new PathLayer({
-                        id: "traffic-paths",
-                        data: pathData,
-                        pickable: false,
-                        capRounded: true,
-                        jointRounded: true,
-                        widthUnits: "pixels",
-                        getPath: (d) => d.path,
-                        getColor: (d) => d.color,
-                        getWidth: ARC_WIDTH_PX,
-                        parameters: {
-                            depthTest: false
-                        }
-                    }),
-                    new ScatterplotLayer({
-                        id: "traffic-heads",
-                        data: headData,
-                        pickable: false,
-                        stroked: false,
-                        filled: true,
-                        radiusUnits: "pixels",
-                        getPosition: (d) => d.position,
-                        getRadius: ARC_HEAD_RADIUS_PX,
-                        getFillColor: (d) => d.color,
-                        parameters: {
-                            depthTest: false
-                        }
-                    })
-                ]
+            layers: pathData.length === 0 ? [] : [
+                new PathLayer({
+                    id: "traffic-paths",
+                    data: pathData,
+                    pickable: false,
+                    wrapLongitude: true,
+                    capRounded: true,
+                    jointRounded: true,
+                    widthUnits: "pixels",
+                    getPath: (d) => d.path,
+                    getColor: (d) => d.color,
+                    getWidth: ARC_WIDTH_PX,
+                    parameters: {
+                        depthTest: false
+                    }
+                }),
+                new ScatterplotLayer({
+                    id: "traffic-heads",
+                    data: headData,
+                    pickable: false,
+                    wrapLongitude: true,
+                    stroked: false,
+                    filled: true,
+                    radiusUnits: "pixels",
+                    getPosition: (d) => d.position,
+                    getRadius: ARC_HEAD_RADIUS_PX,
+                    getFillColor: (d) => d.color,
+                    parameters: {
+                        depthTest: false
+                    }
+                })
+            ]
         });
 
         frameId = arcs.length === 0 ? 0 : window.requestAnimationFrame(render);
@@ -230,9 +230,8 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
         }
     }
 
-    return (source, target, color = ARC_COLORS[0]) => {
-        const [start, end] = normalizeArcDirection(source, target);
-        const path = createArcPath(start, end);
+    return (source, target, color = ARC_COLORS.outbound) => {
+        const path = createArcPath(source, target);
 
         if (arcs.length >= maxActiveArcs) {
             arcs.shift();
@@ -268,11 +267,24 @@ export function createWorldMap({
         style,
         ...view,
         attributionControl: false,
-        interactive: false,
+        canvasContextAttributes: {
+            antialias: true
+        },
+        interactive: true,
+        dragRotate: false,
+        doubleClickZoom: false,
+        scrollZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchPitch: false,
+        pitchWithRotate: false,
         renderWorldCopies: false
     });
 
-    let drawArc = () => {};
+    const queuedArcs = [];
+    let drawArc = (source, target, color) => {
+        queuedArcs.push({ source, target, color });
+    };
     let demoIntervalId = null;
 
     map.on("error", (event) => {
@@ -287,6 +299,12 @@ export function createWorldMap({
 
         map.addControl(overlay);
         drawArc = createArcAnimator(overlay, maxActiveArcs);
+
+        for (const arc of queuedArcs) {
+            drawArc(arc.source, arc.target, arc.color);
+        }
+
+        queuedArcs.length = 0;
     });
 
     window.addEventListener("resize", () => map.resize());
@@ -298,7 +316,7 @@ export function createWorldMap({
         },
         startDemoTraffic({
             points = DEMO_POINTS,
-            colors = ARC_COLORS,
+            colors = Object.values(ARC_COLORS),
             burstCount = 3,
             burstDelayMs = 450,
             intervalMs = 500

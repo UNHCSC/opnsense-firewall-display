@@ -1,0 +1,26 @@
+{
+  "name": "OPNsense Firewall Visualizer",
+  "short_name": "Firewall Viz",
+  "description": "View semi-live logs from an OPNsense firewall in a clean and modern interface.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F4EC",
+  "theme_color": "#001B43",
+  "categories": ["security", "network", "utilities"],
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

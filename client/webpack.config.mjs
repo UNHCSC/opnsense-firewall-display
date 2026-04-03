@@ -10,19 +10,28 @@ const __dirname = path.dirname(__filename);
 const entriesDirectory = path.resolve(__dirname, "src/scripts");
 const stylesDirectory = path.resolve(__dirname, "src/styles");
 const assetsDirectory = path.resolve(__dirname, "src/assets");
+const pwaDirectory = path.resolve(__dirname, "src/pwa");
 
-class CopyAssetsPlugin {
+class CopyClientFilesPlugin {
     apply(compiler) {
-        compiler.hooks.afterEmit.tap("CopyAssetsPlugin", () => {
+        compiler.hooks.afterEmit.tap("CopyClientFilesPlugin", () => {
             if (!fs.existsSync(assetsDirectory)) {
-                return;
+                fs.mkdirSync(path.resolve(compiler.options.output.path, "assets"), { recursive: true });
+            } else {
+                fs.cpSync(
+                    assetsDirectory,
+                    path.resolve(compiler.options.output.path, "assets"),
+                    { recursive: true }
+                );
             }
 
-            fs.cpSync(
-                assetsDirectory,
-                path.resolve(compiler.options.output.path, "assets"),
-                { recursive: true }
-            );
+            if (fs.existsSync(pwaDirectory)) {
+                fs.cpSync(
+                    pwaDirectory,
+                    compiler.options.output.path,
+                    { recursive: true }
+                );
+            }
         });
     }
 }
@@ -98,7 +107,7 @@ export default function (env = Object.create(null), argv = Object.create(null)) 
         },
 
         plugins: [
-            new CopyAssetsPlugin(),
+            new CopyClientFilesPlugin(),
             new MiniCssExtractPlugin({
                 filename: "[name].css"
             })

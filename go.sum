@@ -91,6 +91,8 @@ github.com/z46-dev/gomysql v0.0.0-20260401152826-aca3d65069d2 h1:bmhv+N/i8/9Qapu
 github.com/z46-dev/gomysql v0.0.0-20260401152826-aca3d65069d2/go.mod h1:IFQuHX0/6DQdiOFE8zVdrCLPQB4Q+3WhisAZh2RnOew=
 github.com/z46-dev/gomysql v0.0.0-20260403174438-ecf81653c8ae h1:u3aRBYnbuYlsRDf5prvD6thsYqSoXiTXHYcCNgT60r8=
 github.com/z46-dev/gomysql v0.0.0-20260403174438-ecf81653c8ae/go.mod h1:IFQuHX0/6DQdiOFE8zVdrCLPQB4Q+3WhisAZh2RnOew=
+github.com/z46-dev/gomysql v0.0.0-20260403220239-44ebdafa625a h1:X3tMd1cK4QR0kmO/UZkr/Q9kil7ph7nYHI4qqFv13sk=
+github.com/z46-dev/gomysql v0.0.0-20260403220239-44ebdafa625a/go.mod h1:IFQuHX0/6DQdiOFE8zVdrCLPQB4Q+3WhisAZh2RnOew=
 golang.org/x/crypto v0.49.0 h1:+Ng2ULVvLHnJ/ZFEq4KdcDd/cfjrrjjNSXNzxg0Y4U4=
 golang.org/x/crypto v0.49.0/go.mod h1:ErX4dUh2UM+CFYiXZRTcMpEcN8b/1gxEuv3nODoYtCA=
 golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 h1:R84qjqJb5nVJMxqWYb3np9L5ZsaDtB+a39EqjV0JSUM=

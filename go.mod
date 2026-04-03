@@ -10,7 +10,7 @@ require (
 	github.com/gofiber/template/html/v2 v2.1.3
 	github.com/oschwald/geoip2-golang v1.13.0
 	github.com/z46-dev/golog v0.0.0-20260324172018-d1a87bbdeb64
-	github.com/z46-dev/gomysql v0.0.0-20260403174438-ecf81653c8ae
+	github.com/z46-dev/gomysql v0.0.0-20260403220239-44ebdafa625a
 )
 
 require (
