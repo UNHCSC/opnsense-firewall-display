@@ -1,6 +1,9 @@
 package app
 
 import (
+	"net/http"
+
+	"github.com/UNHCSC/opnsense-firewall-display/client"
 	"github.com/UNHCSC/opnsense-firewall-display/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
@@ -12,7 +15,14 @@ var appLog *golog.Logger = golog.New().Prefix("[Please call app.InitAndListen() 
 func InitAndListen(parentLog *golog.Logger) (app *fiber.App, err error) {
 	appLog = parentLog.SpawnChild().Prefix("[APP]", golog.BoldPurple)
 
-	var templateEngine *html.Engine = html.New("./client/views", ".html")
+	var templateEngine *html.Engine
+
+	if config.Config.WebServer.ReloadTemplatesOnEachRender {
+		templateEngine = html.NewFileSystem(http.Dir("./client"), ".html")
+	} else {
+		templateEngine = html.NewFileSystem(http.FS(client.EmbedFS), ".html")
+	}
+
 	templateEngine.Reload(config.Config.WebServer.ReloadTemplatesOnEachRender)
 
 	app = fiber.New(fiber.Config{
@@ -21,7 +31,16 @@ func InitAndListen(parentLog *golog.Logger) (app *fiber.App, err error) {
 	})
 
 	// Statics
-	app.Static("/static", "./client/static")
+	app.Static("/static", "./client/static", fiber.Static{
+		CacheDuration: -1,
+		MaxAge:        0,
+		ModifyResponse: func(c *fiber.Ctx) error {
+			c.Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+			c.Set("Pragma", "no-cache")
+			c.Set("Expires", "0")
+			return nil
+		},
+	})
 
 	// Pages
 	app.Get("/", getIndex)
@@ -33,17 +52,9 @@ func InitAndListen(parentLog *golog.Logger) (app *fiber.App, err error) {
 	)
 
 	// API v1
-	var (
-		apiV1History fiber.Router = apiV1.Group("/history")
-	)
+	apiV1.Get("/logs", apiGetLogs)
+	apiV1.Get("/logStream", apiGetLogStream)
+	apiV1.Get("/geolocate", apiGetGeolocation)
 
-	// API v1 auth
-	apiV1History.Get("/headers", _noop)
-	apiV1History.Get("/logs", _noop)
-
-	return
-}
-
-func _noop(*fiber.Ctx) (err error) {
 	return
 }

@@ -1,0 +1,26 @@
+/* Defines the theme colors */
+
+/*
+ * https://universitysystemnh.sharepoint.com/teams/MarketingResources/Shared%20Documents/Forms/AllItems.aspx?id=%2Fteams%2FMarketingResources%2FShared%20Documents%2FUNH%20Brand%20Book%2FUNH%5FBrand%5FBook%5F7x10%5FOCT2025%2Epdf&parent=%2Fteams%2FMarketingResources%2FShared%20Documents%2FUNH%20Brand%20Book&p=true&ga=1
+ * Colors taken from the USNH Brand Book, rev OCT 2025. See page 23.
+ */
+
+@layer colors {
+    :root {
+        --primary-blue: #001B43;
+        --primary-white: #FFFFFF;
+        --secondary-spring-green: #CBDB2A;
+        --secondary-land-green: #008647;
+        --secondary-forest-green: #145634;
+        --accent-granite-gray: #776D67;
+        --accent-thermosphere-blue: #004F9D;
+        --accent-seacoast-blue: #4C9BD5;
+        --accent-parchment-white: #F5F4EC;
+        --accent-sunrise-pink: #FEE7D7;
+        --font-brand-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    * {
+        font-family: var(--font-brand-sans);
+    }
+}

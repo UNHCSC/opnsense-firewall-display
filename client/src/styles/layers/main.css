@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+@layer main {
+    main {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    main > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    main::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("/static/assets/UNH-Grid-Topo_Port-720x90.svg");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        pointer-events: none;
+        opacity: 0.12;
+        z-index: 0;
+    }
+}

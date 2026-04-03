@@ -1,5 +1,37 @@
 @import "tailwindcss";
+@import "./layers/theme.css";
+@import "./layers/header.css";
+@import "./layers/footer.css";
+@import "./layers/main.css";
+@import "./layers/world-map.css";
 
-body {
-    @apply bg-gray-100 text-gray-900;
+@layer index-page {
+    html,
+    body {
+        min-height: 100%;
+    }
+
+    body {
+        margin: 0;
+    }
+
+    .index-page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+        width: 100%;
+
+        > * {
+            min-height: 0;
+            width: 100%;
+        }
+
+        > :where(header, footer) {
+            flex: 0 0 auto;
+        }
+
+        > :where(main, .content, .template) {
+            flex: 1 1 auto;
+        }
+    }
 }

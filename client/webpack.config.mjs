@@ -9,6 +9,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const entriesDirectory = path.resolve(__dirname, "src/scripts");
 const stylesDirectory = path.resolve(__dirname, "src/styles");
+const assetsDirectory = path.resolve(__dirname, "src/assets");
+
+class CopyAssetsPlugin {
+    apply(compiler) {
+        compiler.hooks.afterEmit.tap("CopyAssetsPlugin", () => {
+            if (!fs.existsSync(assetsDirectory)) {
+                return;
+            }
+
+            fs.cpSync(
+                assetsDirectory,
+                path.resolve(compiler.options.output.path, "assets"),
+                { recursive: true }
+            );
+        });
+    }
+}
 
 function getEntries() {
     const files = fs.readdirSync(entriesDirectory, { withFileTypes: true });
@@ -81,6 +98,7 @@ export default function (env = Object.create(null), argv = Object.create(null)) 
         },
 
         plugins: [
+            new CopyAssetsPlugin(),
             new MiniCssExtractPlugin({
                 filename: "[name].css"
             })

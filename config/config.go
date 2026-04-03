@@ -13,9 +13,18 @@ type Configuration struct {
 	} `toml:"database"` // Database configuration
 
 	SyslogListener struct {
-		Address             string `toml:"address" default:":5140" validate:"required"` // Listen address for the syslog listener e.g. ":5140", "
-		MaximumNumberToKeep int    `toml:"maximum_number_to_keep" default:"100000"`     // Maximum number of records to keep in the database. Older records will be deleted when this limit is exceeded.
+		Address                     string `toml:"address" default:":5140" validate:"required"`  // Listen address for the syslog listener e.g. ":5140", "
+		MaximumNumberToKeep         int    `toml:"maximum_number_to_keep" default:"100000"`      // Maximum number of records to keep in the database. Older records will be deleted when this limit is exceeded.
+		BufferSize                  int    `toml:"buffer_size" default:"65536"`                  // Size of the buffer for receiving syslog messages in bytes. Default is 64KB, which is the maximum size of a UDP packet.
+		ChannelBufferSize           int    `toml:"channel_buffer_size" default:"512"`            // Size of the channel buffer for processing syslog messages. This can help prevent message loss during bursts of log entries.
+		SubscriberChannelBufferSize int    `toml:"subscriber_channel_buffer_size" default:"256"` // Size of the channel buffer for subscribers to the syslog messages. This can help prevent blocking if a subscriber is slow to process messages.
 	} `toml:"syslog_listener"` // Syslog listener configuration
+
+	GeoIP struct {
+		ASNDBPath     string `toml:"asn_db_path" default:"GeoLite2-ASN.mmdb" validate:"required"`         // Path to the MaxMind GeoLite2 ASN database file
+		CityDBPath    string `toml:"city_db_path" default:"GeoLite2-City.mmdb" validate:"required"`       // Path to the MaxMind GeoLite2 City database file
+		CountryDBPath string `toml:"country_db_path" default:"GeoLite2-Country.mmdb" validate:"required"` // Path to the MaxMind GeoLite2 Country database file
+	} `toml:"geoip"` // GeoIP configuration
 }
 
 var Config Configuration

@@ -1,5 +1,9 @@
-<script src="/static/index.js" type="module" defer></script>
+<script src="static/index.js" type="module" defer></script>
 
-<div class="main">
-    <h1>Hello, World!</h1>
-</div>
+{{ template "views/header" . }}
+
+<main>
+    {{ template "views/world_map" . }}
+</main>
+
+{{ template "views/footer" . }}

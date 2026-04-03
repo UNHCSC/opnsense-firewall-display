@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+@layer header {
+    header {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem 1.5rem;
+        padding: 0.85rem 1rem;
+        overflow: hidden;
+        color: var(--primary-white);
+        background-color: var(--primary-blue);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 18px 36px rgba(0, 27, 67, 0.14);
+    }
+
+    header::after {
+        content: "";
+        position: absolute;
+        inset: 0 0 0 auto;
+        width: min(48rem, 38vw);
+        background-image: url("/static/assets/UNH-Doodles-White-Wildcat Paw.svg");
+        background-position: right 32rem center;
+        background-repeat: no-repeat;
+        background-size: clamp(6.5rem, 14vw, 9rem);
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    header > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    header img {
+        width: auto;
+        height: clamp(3.3rem, 4.9vw, 4.35rem);
+        max-width: min(100%, 19rem);
+        flex: 0 0 auto;
+        object-fit: contain;
+    }
+
+    header nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    header nav a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        min-height: 2.75rem;
+        padding: 0.7rem 1rem;
+        color: var(--primary-white);
+        font-size: 0.9375rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        white-space: nowrap;
+        background-color: rgba(245, 244, 236, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 9999px;
+        transition:
+            background-color 160ms ease,
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            transform 160ms ease;
+    }
+
+    header nav a::before {
+        content: "";
+        width: 1rem;
+        height: 1rem;
+        flex: 0 0 1rem;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+    }
+
+    header nav a:nth-of-type(1)::before {
+        background-image: url("/static/assets/header-nav-download.svg");
+    }
+
+    header nav a:nth-of-type(2)::before {
+        background-image: url("/static/assets/header-nav-filter.svg");
+    }
+
+    header nav a:nth-of-type(3)::before {
+        background-image: url("/static/assets/header-nav-settings.svg");
+    }
+
+    header nav a:hover {
+        background-color: rgba(245, 244, 236, 0.16);
+        border-color: var(--accent-parchment-white);
+        transform: translateY(-1px);
+    }
+
+    header nav a:focus-visible {
+        outline: none;
+        border-color: var(--accent-parchment-white);
+        box-shadow: 0 0 0 3px rgba(203, 219, 42, 0.22);
+    }
+
+    @media (min-width: 768px) {
+        header {
+            padding: 0.95rem 1.6rem;
+        }
+
+        header nav a {
+            padding-left: 1.1rem;
+            padding-right: 1.2rem;
+        }
+    }
+
+    @media (max-width: 720px) {
+        header {
+            align-items: flex-start;
+        }
+
+        header::after {
+            width: 8rem;
+            background-position: right 0.75rem top 0.9rem;
+            background-size: 6rem;
+        }
+
+        header nav {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        header nav a {
+            flex: 1 1 12rem;
+        }
+    }
+}

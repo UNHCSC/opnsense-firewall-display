@@ -12,7 +12,6 @@ import (
 
 var (
 	dbLog              *golog.Logger
-	SyslogHeaders      *gomysql.RegisteredStruct[SyslogHeader]
 	FirewallLogEntries *gomysql.RegisteredStruct[FirewallLogEntry]
 )
 
@@ -21,11 +20,6 @@ func Init(parentLog *golog.Logger) (err error) {
 
 	if err = gomysql.Begin(config.Config.Database.File); err != nil {
 		dbLog.Errorf("Failed to initialize database: %v\n", err)
-		return
-	}
-
-	if SyslogHeaders, err = gomysql.Register(SyslogHeader{}); err != nil {
-		dbLog.Errorf("Failed to register LocalUser struct: %v\n", err)
 		return
 	}
 
@@ -40,11 +34,6 @@ func Init(parentLog *golog.Logger) (err error) {
 	if len(os.Args) > 1 && slices.Contains(os.Args, "--allow-destructive-migrations") {
 		migrationOpts.AllowDestructive = true
 		dbLog.Warning("Destructive migrations are enabled!")
-	}
-
-	if err = migrate(SyslogHeaders, migrationOpts); err != nil {
-		dbLog.Errorf("Failed to migrate LocalUsers table: %v\n", err)
-		return
 	}
 
 	if err = migrate(FirewallLogEntries, migrationOpts); err != nil {
