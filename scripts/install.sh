@@ -4,7 +4,7 @@
 # This script downloads and installs the OPNsense Firewall Display Service from the latest git commit. It also sets up a systemd service to manage the application.
 
 GITHUB_REPOSITORY="UNHCSC/opnsense-firewall-display"
-REPOSITORY_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}.git"
+REPOSITORY_URL="https://github.com/${GITHUB_REPOSITORY}.git"
 
 set -e
 set -o pipefail
