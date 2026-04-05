@@ -17,7 +17,7 @@ export async function apiGetLogsByAge(ageSeconds = 3600) {
 }
 
 // Note: the emmitted json objects are formatted as { entry: <>, geolocation: { source: <>, destination: <> } }
-export async function apiGetLogStream(onMessage, onClose, onError) {
+export function apiGetLogStream(onMessage, onClose, onError) {
     const eventSource = new EventSource("/api/v1/logStream");
 
     eventSource.onmessage = event => {

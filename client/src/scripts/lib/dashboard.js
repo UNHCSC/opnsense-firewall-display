@@ -22,6 +22,22 @@ async function buildRemoteIPInfoLookup(entries) {
 export async function initializeDashboard(worldMap) {
     const chartsController = createDashboardCharts();
     const mapController = worldMap ? await createLiveTrafficController(worldMap) : null;
+    let eventSource = null;
+    let destroyed = false;
+
+    function destroy() {
+        if (destroyed) {
+            return;
+        }
+
+        destroyed = true;
+        window.removeEventListener("pagehide", destroy);
+        eventSource?.close();
+        mapController?.destroy?.();
+        chartsController.destroy();
+    }
+
+    window.addEventListener("pagehide", destroy, { once: true });
     const filtersController = createHistoryFiltersController({
         onApply: async (requestedFilters) => {
             const historyEntries = await apiGetLogsByAge(requestedFilters.ageSeconds);
@@ -41,8 +57,14 @@ export async function initializeDashboard(worldMap) {
         console.error("Failed to load history for dashboard charts:", error);
     }
 
-    apiGetLogStream(payload => {
-        mapController?.ingestPayload(payload);
-        chartsController.ingestPayload(payload);
-    }, () => console.warn("Live stream closed"), error => console.error("Live stream error:", error));
+    if (!destroyed) {
+        eventSource = apiGetLogStream(payload => {
+            mapController?.ingestPayload(payload);
+            chartsController.ingestPayload(payload);
+        }, () => console.warn("Live stream closed"), error => console.error("Live stream error:", error));
+    }
+
+    return {
+        destroy
+    };
 }

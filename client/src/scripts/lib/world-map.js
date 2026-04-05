@@ -74,6 +74,7 @@ const ARC_POINT_COUNT = 48;
 const ARC_WIDTH_PX = 2.5;
 const ARC_HEAD_RADIUS_PX = 3.5;
 const ARC_SPEED = 0.035;
+const ARC_FRAME_INTERVAL_MS = 1000 / 30;
 const MIN_ARC_DURATION_MS = 500;
 const MAX_ARC_DURATION_MS = 2600;
 const DEFAULT_MAX_ACTIVE_ARCS = 160;
@@ -152,11 +153,47 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
     let arcs = [];
     let nextArcId = 0;
     let frameId = 0;
+    let lastFrameAt = 0;
+    let hasRenderedLayers = false;
+    let destroyed = false;
+    const pathData = [];
+    const headData = [];
+
+    function clearLayers() {
+        if (!hasRenderedLayers) {
+            return;
+        }
+
+        overlay.setProps({
+            layers: []
+        });
+        hasRenderedLayers = false;
+    }
+
+    function stopRenderLoop() {
+        if (frameId !== 0) {
+            window.cancelAnimationFrame(frameId);
+            frameId = 0;
+        }
+    }
 
     function render(now = performance.now()) {
-        const liveArcs = [];
-        const pathData = [];
-        const headData = [];
+        frameId = 0;
+
+        if (destroyed) {
+            return;
+        }
+
+        if (now - lastFrameAt < ARC_FRAME_INTERVAL_MS) {
+            ensureRenderLoop();
+            return;
+        }
+
+        lastFrameAt = now;
+        pathData.length = 0;
+        headData.length = 0;
+
+        let liveArcCount = 0;
 
         for (const arc of arcs) {
             const elapsed = now - arc.startedAt;
@@ -168,26 +205,35 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
             const progress = easeInOutCubic(Math.min(1, elapsed / arc.durationMs));
             const fade = elapsed <= arc.durationMs ? 1 : Math.max(0, 1 - ((elapsed - arc.durationMs) / ARC_FADE_MS));
             const pointIndex = Math.min(arc.path.length - 1, Math.max(1, Math.ceil(progress * arc.path.length) - 1));
+            const alpha = Math.round(255 * fade);
 
-            liveArcs.push(arc);
+            if (pointIndex > arc.lastPointIndex) {
+                for (let index = arc.lastPointIndex + 1; index <= pointIndex; index += 1) {
+                    arc.visiblePath.push(arc.path[index]);
+                }
 
-            pathData.push({
-                id: arc.id,
-                path: arc.path.slice(0, pointIndex + 1),
-                color: [...arc.color, Math.round(255 * fade)]
-            });
+                arc.lastPointIndex = pointIndex;
+            }
 
-            headData.push({
-                id: arc.id,
-                position: arc.path[pointIndex],
-                color: [...arc.color, Math.round(255 * fade)]
-            });
+            arc.pathData.color[3] = alpha;
+            arc.headData.position = arc.path[pointIndex];
+
+            arcs[liveArcCount] = arc;
+            liveArcCount += 1;
+            pathData.push(arc.pathData);
+            headData.push(arc.headData);
         }
 
-        arcs = liveArcs;
+        arcs.length = liveArcCount;
+
+        if (pathData.length === 0) {
+            clearLayers();
+            lastFrameAt = 0;
+            return;
+        }
 
         overlay.setProps({
-            layers: pathData.length === 0 ? [] : [
+            layers: [
                 new PathLayer({
                     id: "traffic-paths",
                     data: pathData,
@@ -220,33 +266,61 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
                 })
             ]
         });
+        hasRenderedLayers = true;
 
-        frameId = arcs.length === 0 ? 0 : window.requestAnimationFrame(render);
+        ensureRenderLoop();
     }
 
     function ensureRenderLoop() {
-        if (frameId === 0) {
+        if (!destroyed && frameId === 0) {
             frameId = window.requestAnimationFrame(render);
         }
     }
 
-    return (source, target, color = ARC_COLORS.outbound) => {
-        const path = createArcPath(source, target);
+    return {
+        destroy() {
+            destroyed = true;
+            stopRenderLoop();
+            arcs.length = 0;
+            pathData.length = 0;
+            headData.length = 0;
+            clearLayers();
+        },
+        drawArc(source, target, color = ARC_COLORS.outbound) {
+            if (destroyed) {
+                return;
+            }
 
-        if (arcs.length >= maxActiveArcs) {
-            arcs.shift();
+            const path = createArcPath(source, target);
+            const colorWithAlpha = [...color, 255];
+            const visiblePath = [path[0]];
+
+            if (arcs.length >= maxActiveArcs) {
+                arcs.shift();
+            }
+
+            arcs.push({
+                id: nextArcId,
+                path,
+                visiblePath,
+                lastPointIndex: 0,
+                pathData: {
+                    id: nextArcId,
+                    path: visiblePath,
+                    color: colorWithAlpha
+                },
+                headData: {
+                    id: nextArcId,
+                    position: path[0],
+                    color: colorWithAlpha
+                },
+                durationMs: getArcDuration(path),
+                startedAt: performance.now()
+            });
+
+            nextArcId += 1;
+            ensureRenderLoop();
         }
-
-        arcs.push({
-            id: nextArcId,
-            path,
-            color,
-            durationMs: getArcDuration(path),
-            startedAt: performance.now()
-        });
-
-        nextArcId += 1;
-        ensureRenderLoop();
     };
 }
 
@@ -268,7 +342,7 @@ export function createWorldMap({
         ...view,
         attributionControl: false,
         canvasContextAttributes: {
-            antialias: true
+            antialias: false
         },
         interactive: true,
         dragRotate: false,
@@ -282,23 +356,72 @@ export function createWorldMap({
     });
 
     const queuedArcs = [];
+    const demoTimeoutIds = [];
+    let animator = null;
+    let destroyed = false;
     let drawArc = (source, target, color) => {
+        if (queuedArcs.length >= maxActiveArcs) {
+            queuedArcs.shift();
+        }
+
         queuedArcs.push({ source, target, color });
     };
     let demoIntervalId = null;
+    const resizeHandler = () => {
+        if (!destroyed) {
+            map.resize();
+        }
+    };
+    const pageHideHandler = () => {
+        destroy();
+    };
+
+    function stopDemoTraffic() {
+        if (demoIntervalId !== null) {
+            window.clearInterval(demoIntervalId);
+            demoIntervalId = null;
+        }
+
+        for (const timeoutId of demoTimeoutIds) {
+            window.clearTimeout(timeoutId);
+        }
+
+        demoTimeoutIds.length = 0;
+    }
+
+    function destroy() {
+        if (destroyed) {
+            return;
+        }
+
+        destroyed = true;
+        stopDemoTraffic();
+        queuedArcs.length = 0;
+        drawArc = () => {};
+        window.removeEventListener("resize", resizeHandler);
+        window.removeEventListener("pagehide", pageHideHandler);
+        animator?.destroy();
+        animator = null;
+        map.remove();
+    }
 
     map.on("error", (event) => {
         console.error("World map error:", event?.error || event);
     });
 
     map.once("load", () => {
+        if (destroyed) {
+            return;
+        }
+
         const overlay = new MapboxOverlay({
             interleaved: true,
             layers: []
         });
 
         map.addControl(overlay);
-        drawArc = createArcAnimator(overlay, maxActiveArcs);
+        animator = createArcAnimator(overlay, maxActiveArcs);
+        drawArc = animator.drawArc;
 
         for (const arc of queuedArcs) {
             drawArc(arc.source, arc.target, arc.color);
@@ -307,10 +430,16 @@ export function createWorldMap({
         queuedArcs.length = 0;
     });
 
-    window.addEventListener("resize", () => map.resize());
+    map.on("remove", () => {
+        animator?.destroy();
+        animator = null;
+    });
+    window.addEventListener("resize", resizeHandler, { passive: true });
+    window.addEventListener("pagehide", pageHideHandler, { once: true });
 
     return {
         map,
+        destroy,
         drawArc(source, target, color) {
             drawArc(source, target, color);
         },
@@ -321,15 +450,15 @@ export function createWorldMap({
             burstDelayMs = 450,
             intervalMs = 500
         } = {}) {
+            stopDemoTraffic();
+
             for (let index = 0; index < burstCount; index += 1) {
-                window.setTimeout(() => {
+                const timeoutId = window.setTimeout(() => {
                     const [source, target] = getRandomPair(points);
                     drawArc(source, target, colors[index % colors.length]);
                 }, index * burstDelayMs);
-            }
 
-            if (demoIntervalId !== null) {
-                window.clearInterval(demoIntervalId);
+                demoTimeoutIds.push(timeoutId);
             }
 
             demoIntervalId = window.setInterval(() => {
@@ -338,12 +467,7 @@ export function createWorldMap({
                 drawArc(source, target, color);
             }, intervalMs);
 
-            return () => {
-                if (demoIntervalId !== null) {
-                    window.clearInterval(demoIntervalId);
-                    demoIntervalId = null;
-                }
-            };
+            return stopDemoTraffic;
         }
     };
 }

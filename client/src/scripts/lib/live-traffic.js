@@ -11,6 +11,8 @@ import {
     shouldAcceptEntry
 } from "./traffic-events.js";
 
+const MAX_LOGGED_NULL_ISLAND_IPS = 512;
+
 function getArcColor(entry) {
     const direction = getDirection(entry);
     const action = getAction(entry);
@@ -78,6 +80,13 @@ export async function createLiveTrafficController(worldMap) {
         }
 
         loggedNullIslandIPs.add(normalizedIP);
+        if (loggedNullIslandIPs.size > MAX_LOGGED_NULL_ISLAND_IPS) {
+            const oldestIP = loggedNullIslandIPs.values().next().value;
+            if (oldestIP !== undefined) {
+                loggedNullIslandIPs.delete(oldestIP);
+            }
+        }
+
         console.warn("Ignoring null-island geolocation and dropping arc endpoint:", ipAddress, {
             label,
             direction: entry?.direction,
@@ -121,6 +130,9 @@ export async function createLiveTrafficController(worldMap) {
     }
 
     return {
+        destroy() {
+            loggedNullIslandIPs.clear();
+        },
         ingestPayload
     };
 }
