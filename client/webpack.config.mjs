@@ -122,7 +122,20 @@ export default function (env = Object.create(null), argv = Object.create(null)) 
         module: {
             rules: [{
                 test: /\.css$/i,
-                use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"]
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: "css-loader",
+                        options: {
+                            url: {
+                                // Keep application static asset paths literal so they continue
+                                // to resolve through the server's /static mount point.
+                                filter: (url) => !url.startsWith("/static/assets/")
+                            }
+                        }
+                    },
+                    "postcss-loader"
+                ]
             }]
         },
 
