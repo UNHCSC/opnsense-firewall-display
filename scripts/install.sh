@@ -54,13 +54,34 @@ usage() {
 install_service() {
     local install_dir=$(util_confirm_value "Enter installation directory" "/opt/opnsense-firewall-display")
     local service_user="fwdisplay"
+    local current_user="$(whoami)"
+    local existing_remote=""
 
     # Create installation directory if it doesn't exist
     sudo mkdir -p "$install_dir"
-    sudo chown "$(whoami)":"$(whoami)" "$install_dir"
+    sudo chown -R "$current_user":"$current_user" "$install_dir"
 
-    # Git clone the repository and build the project
-    git clone --depth 1 "${REPOSITORY_URL}" "$install_dir"
+    # Clone a fresh checkout or update an existing deployment in place.
+    if [ -d "${install_dir}/.git" ]; then
+        existing_remote="$(git -C "$install_dir" config --get remote.origin.url || true)"
+        if [[ "$existing_remote" != *"${GITHUB_REPOSITORY}"* ]]; then
+            echo "Error: ${install_dir} already contains a different git repository."
+            exit 1
+        fi
+
+        echo "Existing deployment detected, updating repository..."
+        git -C "$install_dir" fetch --depth 1 origin main
+        git -C "$install_dir" checkout -B main FETCH_HEAD
+    else
+        if [ -n "$(find "$install_dir" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then
+            echo "Error: ${install_dir} already exists and is not an empty directory."
+            echo "If this is an existing deployment, it must contain the ${GITHUB_REPOSITORY} git checkout."
+            exit 1
+        fi
+
+        git clone --depth 1 "${REPOSITORY_URL}" "$install_dir"
+    fi
+
     cd "$install_dir"
 
     go build -o fwdisplay .
@@ -114,7 +135,8 @@ EOL
         sudo nano "${install_dir}/config.toml"
     fi
 
-    sudo systemctl enable --now fwdisplay.service
+    sudo systemctl enable fwdisplay.service
+    sudo systemctl restart fwdisplay.service
     echo "Sucessfully installed the OPNsense Firewall Display Service! The service is now running and will start on boot. You can manage the service using 'sudo systemctl [start|stop|restart] fwdisplay.service'."
     exit 0
 }
