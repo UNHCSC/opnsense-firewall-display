@@ -232,11 +232,14 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
             return;
         }
 
+        const layerPathData = pathData.slice();
+        const layerHeadData = headData.slice();
+
         overlay.setProps({
             layers: [
                 new PathLayer({
                     id: "traffic-paths",
-                    data: pathData,
+                    data: layerPathData,
                     pickable: false,
                     wrapLongitude: true,
                     capRounded: true,
@@ -251,7 +254,7 @@ function createArcAnimator(overlay, maxActiveArcs = DEFAULT_MAX_ACTIVE_ARCS) {
                 }),
                 new ScatterplotLayer({
                     id: "traffic-heads",
-                    data: headData,
+                    data: layerHeadData,
                     pickable: false,
                     wrapLongitude: true,
                     stroked: false,
