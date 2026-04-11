@@ -103,7 +103,7 @@ func syslogWorker() {
 			var excess int64 = count - int64(config.Config.SyslogListener.MaximumNumberToKeep)
 			logger.Infof("database has %d entries, which exceeds the maximum of %d. Deleting oldest %d entries.", count, config.Config.SyslogListener.MaximumNumberToKeep, excess)
 			var deleted int64
-			if deleted, err = db.FirewallLogEntries.DeleteWithFilter(gomysql.NewFilter().Ordering(db.FirewallLogEntries.FieldByGoName("id"), true).Limit(int(excess))); err != nil {
+			if deleted, err = db.FirewallLogEntries.DeleteWithFilter(gomysql.NewFilter().Ordering(&db.FirewallLogEntries.PrimaryKeyField, true).Limit(int(excess))); err != nil {
 				logger.Errorf("failed to delete old firewall log entries: %v", err)
 				continue
 			}
