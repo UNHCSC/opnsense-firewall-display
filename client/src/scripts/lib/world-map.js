@@ -375,8 +375,10 @@ export function createWorldMap({
             map.resize();
         }
     };
-    const pageHideHandler = () => {
-        destroy();
+    const pageHideHandler = (event) => {
+        if (!event.persisted) {
+            destroy();
+        }
     };
 
     function stopDemoTraffic() {
@@ -438,7 +440,7 @@ export function createWorldMap({
         animator = null;
     });
     window.addEventListener("resize", resizeHandler, { passive: true });
-    window.addEventListener("pagehide", pageHideHandler, { once: true });
+    window.addEventListener("pagehide", pageHideHandler);
 
     return {
         map,

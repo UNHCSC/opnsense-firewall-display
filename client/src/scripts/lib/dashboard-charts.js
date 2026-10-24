@@ -236,7 +236,7 @@ function hexToRGBA(hex, alpha) {
     return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function createLineChart(canvas, legendContainerID, datasets) {
+function createLineChart(canvas, legendContainerID, datasets, yAxisTitle = "") {
     return new Chart(canvas, {
         type: "line",
         plugins: [htmlLegendPlugin],
@@ -292,12 +292,16 @@ function createLineChart(canvas, legendContainerID, datasets) {
                 y: {
                     beginAtZero: true,
                     grace: "10%",
+                    title: {
+                        display: yAxisTitle !== "",
+                        text: yAxisTitle
+                    },
                     grid: {
                         color: COLORS.chartGrid
                     },
                     ticks: {
                         color: COLORS.chartText,
-                        precision: 0
+                        precision: yAxisTitle === "Mbps" ? 2 : 0
                     }
                 }
             }
@@ -343,7 +347,7 @@ export function createDashboardCharts() {
             label: "Outbound",
             borderColor: COLORS.outbound,
             backgroundColor: hexToRGBA(COLORS.outbound, 0.18)
-        }]),
+        }], "Mbps"),
         decisionTimeline: createLineChart(getCanvas(CHART_IDS.decisionTimeline), LEGEND_IDS.decisionTimeline, [{
             label: "Pass",
             borderColor: COLORS.pass,
@@ -521,7 +525,7 @@ export function createDashboardCharts() {
         }
 
         const directionKey = record.direction === "in" ? "inbound" : "outbound";
-        bucket[directionKey] += delta;
+        bucket[directionKey] += record.packetBytes * delta;
 
         if (record.action === "pass" || record.action === "block") {
             bucket[record.action] += delta;
@@ -554,6 +558,7 @@ export function createDashboardCharts() {
             direction,
             interfaceName: normalizeInterfaceName(entry?.interface),
             ipType: getIPType(entry),
+            packetBytes: Number.isFinite(entry?.length) ? entry.length : 0,
             minuteKey: getMinuteBucketKey(entry),
             protocol: getProtocolLabel(entry),
             remotePort: remotePort === null ? null : String(remotePort),
@@ -660,8 +665,8 @@ export function createDashboardCharts() {
 
         for (const minuteKey of minuteKeys) {
             const bucket = combinedState.minuteBuckets.get(minuteKey);
-            trafficInbound.push(bucket.inbound);
-            trafficOutbound.push(bucket.outbound);
+            trafficInbound.push((bucket.inbound * 8) / 60_000_000);
+            trafficOutbound.push((bucket.outbound * 8) / 60_000_000);
             decisionPass.push(bucket.pass);
             decisionBlock.push(bucket.block);
         }

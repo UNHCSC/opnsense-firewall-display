@@ -108,7 +108,7 @@ export function shouldFilterLocalNetworkTraffic(entry) {
         return false;
     }
 
-    return isLocalNetworkIP(entry?.src_ip) || isLocalNetworkIP(entry?.dst_ip);
+    return isLocalNetworkIP(entry?.src_ip) && isLocalNetworkIP(entry?.dst_ip);
 }
 
 export function shouldAcceptInterface(entry) {

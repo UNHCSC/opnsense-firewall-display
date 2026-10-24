@@ -31,13 +31,19 @@ export async function initializeDashboard(worldMap) {
         }
 
         destroyed = true;
-        window.removeEventListener("pagehide", destroy);
+        window.removeEventListener("pagehide", pageHideHandler);
         eventSource?.close();
         mapController?.destroy?.();
         chartsController.destroy();
     }
 
-    window.addEventListener("pagehide", destroy, { once: true });
+    function pageHideHandler(event) {
+        if (!event.persisted) {
+            destroy();
+        }
+    }
+
+    window.addEventListener("pagehide", pageHideHandler);
     const filtersController = createHistoryFiltersController({
         onApply: async (requestedFilters) => {
             const historyEntries = await apiGetLogsByAge(requestedFilters.ageSeconds);
